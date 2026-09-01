@@ -1,8 +1,8 @@
-import { showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Form, popToRoot, showToast, Toast } from "@raycast/api";
 import { startCaffeinate, deviceName } from "./utils";
 
-export default async function Command(props: { arguments: Arguments.CaffeinateFor }) {
-  const { hours, minutes, seconds } = props.arguments;
+async function caffeinateFor(values: { hours?: string; minutes?: string; seconds?: string }) {
+  const { hours, minutes, seconds } = values;
   const hasValue = hours || minutes || seconds;
 
   if (!hasValue) {
@@ -16,7 +16,7 @@ export default async function Command(props: { arguments: Arguments.CaffeinateFo
     (!seconds || (Number.isInteger(Number(seconds)) && Number(seconds) >= 0));
 
   if (!validInput) {
-    await showToast(Toast.Style.Failure, "Please ensure all arguments are whole numbers");
+    await showToast(Toast.Style.Failure, "Please ensure all fields are whole numbers");
     return;
   }
 
@@ -28,5 +28,27 @@ export default async function Command(props: { arguments: Arguments.CaffeinateFo
     `Caffeinating your ${deviceName()} for ${formattedTime}`,
     `-t ${totalSeconds}`,
     { kind: "for", endsAt: new Date(Date.now() + totalSeconds * 1000).toISOString() },
+  );
+}
+
+export default function Command() {
+  return (
+    <Form
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm
+            title="Caffeinate"
+            onSubmit={(values: { hours?: string; minutes?: string; seconds?: string }) => {
+              popToRoot();
+              caffeinateFor({ hours: values.hours, minutes: values.minutes, seconds: values.seconds });
+            }}
+          />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField id="hours" title="Hours" placeholder="0" />
+      <Form.TextField id="minutes" title="Minutes" placeholder="0" />
+      <Form.TextField id="seconds" title="Seconds" placeholder="0" />
+    </Form>
   );
 }
